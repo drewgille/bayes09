@@ -1,0 +1,101 @@
+---
+title: "hw9"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-04-12"
+---
+
+# 3a
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+yX<-dget(url("http://www2.stat.duke.edu/~pdh10/FCBS/Inline/yX.diabetes.train"))
+```
+
+```{r}
+X <- yX[,-1]
+y <- yX[,1]
+
+BETA.l = NULL
+
+for (l in 0:100){
+  XTX = t(X)%*%X
+  Il = diag(l, ncol(X))
+  XTy = t(X)%*%y
+  beta.l = solve(XTX + Il)%*%XTy
+  BETA.l = cbind(BETA.l, beta.l)
+}
+
+df = as.data.frame(t(BETA.l))%>%
+  mutate(l = 0:100)
+  
+df.plot <- df %>%
+  pivot_longer(cols=1:64)
+
+png("3a_plot.png", width = 1200, height = 800)
+
+p <- ggplot(data = df.plot, aes(x=l))+
+  geom_point(aes(y=value))+
+  facet_wrap(~name)+
+  ylim(c(-.5,.5))
+
+print(p)
+
+dev.off()
+```
+
+# 3b
+
+```{r}
+yX.test<-dget(url("http://www2.stat.duke.edu/~pdh10/FCBS/Inline/yX.diabetes.test"))
+```
+
+```{r}
+X.test <- yX.test[,-1]
+y.test <- yX.test[,1]
+
+y.pred <- NULL
+PSS <- NULL
+
+for (l in 0:100){
+  y.pred = X.test%*%BETA.l[,l+1]
+  PSS = cbind(PSS, sum((y.test-y.pred)^2))
+}
+
+df = as.data.frame(t(PSS))%>%
+  mutate(l = 0:100)
+
+ggplot(data=df, aes(x=l, y=V1))+
+  geom_point()
+```
+
+As we can see, the PSS for when $\lambda$=0 (OLS estimate) is about 67. We see a drastic drop in PSS from $\lambda$=0 to $\lambda$=1, and even more of a decline moving forward (PSS seems to reach a minimum at around $\lambda$=60). Moreover the OLS estimator has higher PSS than all of the other estimates.
+
+# 3c
+
+```{r}
+min(df$V1)
+df$l[which(df$V1==min(df$V1))]
+```
+
+Of the lambda values, the PSS is lowest at 53.13 when lambda is 64.
+
+```{r}
+sort(BETA.l[,65])
+```
+The most important predictors when lambda is 64 are bmi, ltg, map, hdl, and sex.
+
+# 4a
+
+```{r}
+
+```
+
+
+
